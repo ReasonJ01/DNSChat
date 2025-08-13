@@ -93,7 +93,7 @@ func getLLMResponse(q string) (string, error) {
 	bodyReader := bytes.NewReader(jsonBody)
 	r, err := http.NewRequest("POST", "https://api.openai.com/v1/responses", bodyReader)
 	if err != nil {
-		logger.Error("Error creating request:", err)
+		logger.Error("Error creating request", "error", err)
 		return "", err
 	}
 
