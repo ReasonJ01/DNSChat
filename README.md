@@ -13,10 +13,21 @@ I also added tracking for in-flight requests. DNS queries have a short timeout b
 With in-flight request tracking, if a duplicate query comes in while we the response is still generating (e.g the first query that triggered the generation timed-out) then it waits until the request is finished, or until this query times out too. In practice, if the first DNS query times-out, the LLM response is usually ready by the time the 2nd attempt is sent by the client.
 
 ## Usage
+
+### Environment Variables
+- `OPENAI_API_KEY`: Your OpenAI API key (required)
+
+
 ```
-dig @100.113.72.80 -p 4269 "<Your query here>" TXT +short
+go run main.go -p 8081
+```
+**Flags**
+- `-p <port>`: Port to listen on (default: 53)
+```
+dig @127.0.0.1 -p 8081 "<Your query here>" TXT +short
  +time=10
 ```
+
 
 I like to use `+short` to make the output nicer, and `+time=10` to give the LLM a bit longer to generate the response.
 
