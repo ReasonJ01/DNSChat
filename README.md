@@ -31,6 +31,6 @@ dig @127.0.0.1 -p 8081 "<Your query here>" TXT +short
 
 I like to use `+short` to make the output nicer, and `+time=10` to give the LLM a bit longer to generate the response.
 
-![Gif of DNSChat in action](demo2.gif)
+![Gif of DNSChat in action](demo.gif)
 Made using [VHS](https://github.com/charmbracelet/vhs)
 See [demo.tape](demo.tape)
