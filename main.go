@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -25,6 +26,7 @@ type cacheEntry struct {
 }
 
 var (
+	logger     = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	cache      = make(map[string]cacheEntry)
 	CacheMutex = &sync.RWMutex{}
 
@@ -91,7 +93,7 @@ func getLLMResponse(q string) (string, error) {
 	bodyReader := bytes.NewReader(jsonBody)
 	r, err := http.NewRequest("POST", "https://api.openai.com/v1/responses", bodyReader)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		logger.Error("Error creating request:", err)
 		return "", err
 	}
 
@@ -100,7 +102,7 @@ func getLLMResponse(q string) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		logger.Error("Error sending request", "error", err)
 		return "", err
 	}
 	defer resp.Body.Close()
@@ -108,11 +110,11 @@ func getLLMResponse(q string) (string, error) {
 	var result map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
-		fmt.Println("Error decoding response:", err)
+		logger.Error("Error decoding response", "error", err)
 		return "", err
 	}
 
-	fmt.Printf("Full LLM Response: %+v\n", result)
+	logger.Info("Full LLM Response", "response", result)
 
 	// Extract from output[1].content[0].text
 	if output, ok := result["output"].([]any); ok && len(output) > 1 {
@@ -184,7 +186,7 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 func (h *dnsHandler) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 	if len(r.Question) == 0 {
-		fmt.Println("No questions in request")
+		logger.Error("No questions in request")
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Rcode = dns.RcodeServerFailure
@@ -193,10 +195,10 @@ func (h *dnsHandler) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	q := r.Question[0]
-	fmt.Println("Received DNS request for:", q.Name)
+	logger.Info("Received DNS request", "question", q.Name)
 
 	if q.Qtype != dns.TypeTXT {
-		fmt.Println("Unsupported DNS type:", q.Qtype)
+		logger.Error("Unsupported DNS type", "type", q.Qtype)
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Rcode = dns.RcodeNotImplemented
@@ -206,7 +208,6 @@ func (h *dnsHandler) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 
 	response, err := getOrCreateLLMRequest(q.Name)
 	if err != nil {
-		fmt.Println("Error getting LLM response:", err)
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Rcode = dns.RcodeServerFailure
@@ -241,7 +242,7 @@ func main() {
 	var port = flag.Int("p", 53, "Port to listen on (default: 53)")
 	flag.Parse()
 
-	fmt.Printf("Starting DNS server on port %d\n", *port)
+	logger.Info("Starting DNS server", "port", *port)
 
 	err := dns.ListenAndServe(fmt.Sprintf(":%d", *port), "udp", &dnsHandler{})
 	if err != nil {
