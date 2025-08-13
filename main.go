@@ -14,8 +14,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/text/unicode/norm"
-
 	"github.com/miekg/dns"
 )
 
@@ -206,9 +204,7 @@ func (h *dnsHandler) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
-	normQ := norm.NFKD.String(q.Name)
-
-	response, err := getOrCreateLLMRequest(normQ)
+	response, err := getOrCreateLLMRequest(q.Name)
 	if err != nil {
 		fmt.Println("Error getting LLM response:", err)
 		m := new(dns.Msg)
