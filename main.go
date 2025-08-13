@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -241,9 +242,12 @@ func (h *dnsHandler) handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func main() {
-	fmt.Println("Hello, World!")
+	var port = flag.Int("p", 53, "Port to listen on (default: 53)")
+	flag.Parse()
 
-	err := dns.ListenAndServe(":8081", "udp", &dnsHandler{})
+	fmt.Printf("Starting DNS server on port %d\n", *port)
+
+	err := dns.ListenAndServe(fmt.Sprintf(":%d", *port), "udp", &dnsHandler{})
 	if err != nil {
 		log.Fatalf("Failed to start DNS server: %v", err)
 	}
